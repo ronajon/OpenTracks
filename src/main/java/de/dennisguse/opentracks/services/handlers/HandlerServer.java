@@ -29,19 +29,22 @@ public class HandlerServer {
         locationHandler.onSharedPreferenceChanged(context, preferences, key);
     }
 
-    public void sendTrackPoint(TrackPoint trackPoint, int recordingGpsAccuracy) {
+    void sendTrackPoint(TrackPoint trackPoint, int recordingGpsAccuracy) {
         service.newTrackPoint(trackPoint, recordingGpsAccuracy);
+    }
+
+    void sendGpsStatus(GpsStatusValue gpsStatusValue) {
+        service.newGpsStatus(gpsStatusValue);
     }
 
     public interface HandlerServerInterface {
         void newTrackPoint(TrackPoint trackPoint, int gpsAccuracy);
+        void newGpsStatus(GpsStatusValue gpsStatusValue);
     }
 
     public interface Handler {
         void onStart(Context context);
-
         void onStop(Context context);
-
         void onSharedPreferenceChanged(Context context, SharedPreferences preferences, String key);
     }
 }

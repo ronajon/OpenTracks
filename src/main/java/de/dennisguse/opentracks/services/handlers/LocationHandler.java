@@ -17,12 +17,13 @@ import de.dennisguse.opentracks.util.PreferencesUtils;
 import de.dennisguse.opentracks.util.TrackPointUtils;
 import de.dennisguse.opentracks.util.UnitConversions;
 
-class LocationHandler implements HandlerServer.Handler, LocationListener {
+class LocationHandler implements HandlerServer.Handler, LocationListener, GpsStatus.GpsStatusListener {
 
     private String TAG = LocationHandler.class.getSimpleName();
 
     private LocationManager locationManager;
     private HandlerServer handlerServer;
+    private GpsStatus gpsStatus;
     private LocationListenerPolicy locationListenerPolicy;
     private long currentRecordingInterval;
     private int recordingGpsAccuracy;
@@ -34,6 +35,7 @@ class LocationHandler implements HandlerServer.Handler, LocationListener {
 
     @Override
     public void onStart(Context context) {
+        gpsStatus = new GpsStatus(context, this, PreferencesUtils.getMinRecordingInterval(context));
         locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         registerLocationListener();
     }
@@ -42,6 +44,10 @@ class LocationHandler implements HandlerServer.Handler, LocationListener {
     public void onStop(Context context) {
         locationManager = null;
         unregisterLocationListener();
+        if (gpsStatus != null) {
+            gpsStatus.stop();
+            gpsStatus = null;
+        }
     }
 
     @Override
@@ -65,12 +71,24 @@ class LocationHandler implements HandlerServer.Handler, LocationListener {
         if (PreferencesUtils.isKey(context, R.string.recording_gps_accuracy_key, key)) {
             recordingGpsAccuracy = PreferencesUtils.getRecordingGPSAccuracy(context);
         }
+        if (PreferencesUtils.isKey(context, R.string.min_recording_interval_key, key)) {
+            if (gpsStatus != null) {
+                gpsStatus.onMinRecordingIntervalChanged(PreferencesUtils.getMinRecordingInterval(context));
+            }
+        }
+        if (PreferencesUtils.isKey(context, R.string.recording_distance_interval_key, key)) {
+            if (gpsStatus != null) {
+                gpsStatus.onRecordingDistanceChanged(PreferencesUtils.getRecordingDistanceInterval(context));
+            }
+        }
     }
 
     @Override
     public void onLocationChanged(@NonNull Location location) {
-        // TODO do we still need to process the location processing in an asynchronous manner? Let's go to check it out.
         computeLocation(location);
+        if (gpsStatus != null) {
+            gpsStatus.onLocationChanged(location);
+        }
     }
 
     @Override
@@ -80,10 +98,16 @@ class LocationHandler implements HandlerServer.Handler, LocationListener {
 
     @Override
     public void onProviderEnabled(@NonNull String provider) {
+        if (gpsStatus != null) {
+            gpsStatus.onGpsEnabled();
+        }
     }
 
     @Override
     public void onProviderDisabled(@NonNull String provider) {
+        if (gpsStatus != null) {
+            gpsStatus.onGpsDisabled();
+        }
     }
 
     /**
@@ -139,5 +163,16 @@ class LocationHandler implements HandlerServer.Handler, LocationListener {
         }
         locationManager.removeUpdates(this);
         locationManager = null;
+    }
+
+    /**
+     * Called from {@link GpsStatus} to inform that GPS status has changed from prevStatus to currentStatus.
+     *
+     * @param prevStatus    previous {@link GpsStatusValue}.
+     * @param currentStatus current {@link GpsStatusValue}.
+     */
+    @Override
+    public void onGpsStatusChanged(GpsStatusValue prevStatus, GpsStatusValue currentStatus) {
+        handlerServer.sendGpsStatus(currentStatus);
     }
 }
