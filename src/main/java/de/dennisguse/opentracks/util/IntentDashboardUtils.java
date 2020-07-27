@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import de.dennisguse.opentracks.content.data.TrackPointsColumns;
 import de.dennisguse.opentracks.content.data.TracksColumns;
+import de.dennisguse.opentracks.content.data.WaypointsColumns;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
 
 /**
@@ -26,8 +27,9 @@ public class IntentDashboardUtils {
     private static final String EXTRAS_SHOULD_KEEP_SCREEN_ON = "EXTRAS_SHOULD_KEEP_SCREEN_ON";
     private static final String EXTRAS_SHOW_WHEN_LOCKED = "EXTRAS_SHOULD_KEEP_SCREEN_ON";
 
-    private static int TRACK_URI_INDEX = 0;
-    private static int TRACKPOINTS_URI_INDEX = 1;
+    private static final int TRACK_URI_INDEX = 0;
+    private static final int TRACKPOINTS_URI_INDEX = 1;
+    private static final int WAYPOINTS_URI_INDEX = 2;
 
     private IntentDashboardUtils() {
     }
@@ -48,6 +50,7 @@ public class IntentDashboardUtils {
         ArrayList<Uri> uris = new ArrayList<>();
         uris.add(TRACK_URI_INDEX, Uri.withAppendedPath(TracksColumns.CONTENT_URI, trackIdList));
         uris.add(TRACKPOINTS_URI_INDEX, Uri.withAppendedPath(TrackPointsColumns.CONTENT_URI_BY_TRACKID, trackIdList));
+        uris.add(WAYPOINTS_URI_INDEX, Uri.withAppendedPath(WaypointsColumns.CONTENT_URI_BY_TRACKID, trackIdList));
 
         Intent intent = new Intent(ACTION_DASHBOARD);
         intent.putParcelableArrayListExtra(ACTION_DASHBOARD_PAYLOAD, uris);
@@ -59,6 +62,7 @@ public class IntentDashboardUtils {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         ClipData clipData = ClipData.newRawUri(null, uris.get(TRACK_URI_INDEX));
         clipData.addItem(new ClipData.Item(uris.get(TRACKPOINTS_URI_INDEX)));
+        clipData.addItem(new ClipData.Item(uris.get(WAYPOINTS_URI_INDEX)));
         intent.setClipData(clipData);
 
         context.startActivity(intent);

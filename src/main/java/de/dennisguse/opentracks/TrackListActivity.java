@@ -33,8 +33,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -46,8 +44,6 @@ import androidx.loader.app.LoaderManager;
 import androidx.loader.app.LoaderManager.LoaderCallbacks;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
-
-import java.util.Locale;
 
 import de.dennisguse.opentracks.content.data.TracksColumns;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
@@ -229,31 +225,23 @@ public class TrackListActivity extends AbstractListActivity implements ConfirmDe
         // Show trackController when search dialog is dismissed
         SearchManager searchManager = (SearchManager) getSystemService(SEARCH_SERVICE);
         if (searchManager != null) {
-            searchManager.setOnDismissListener(new SearchManager.OnDismissListener() {
-                @Override
-                public void onDismiss() {
-                    trackController.show();
-                }
-            });
+            searchManager.setOnDismissListener(() -> trackController.show());
         }
 
         listView = findViewById(R.id.track_list);
         listView.setEmptyView(findViewById(R.id.track_list_empty_view));
-        listView.setOnItemClickListener(new OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long trackId) {
-                Intent newIntent;
-                if (trackId == recordingTrackId) {
-                    // Is recording -> open record activity.
-                    newIntent = IntentUtils.newIntent(TrackListActivity.this, TrackRecordingActivity.class)
-                            .putExtra(TrackRecordedActivity.EXTRA_TRACK_ID, trackId);
-                } else {
-                    // Not recording -> open detail activity.
-                    newIntent = IntentUtils.newIntent(TrackListActivity.this, TrackRecordedActivity.class)
-                            .putExtra(TrackRecordedActivity.EXTRA_TRACK_ID, trackId);
-                }
-                startActivity(newIntent);
+        listView.setOnItemClickListener((parent, view, position, trackId) -> {
+            Intent newIntent;
+            if (trackId == recordingTrackId) {
+                // Is recording -> open record activity.
+                newIntent = IntentUtils.newIntent(TrackListActivity.this, TrackRecordingActivity.class)
+                        .putExtra(TrackRecordedActivity.EXTRA_TRACK_ID, trackId);
+            } else {
+                // Not recording -> open detail activity.
+                newIntent = IntentUtils.newIntent(TrackListActivity.this, TrackRecordedActivity.class)
+                        .putExtra(TrackRecordedActivity.EXTRA_TRACK_ID, trackId);
             }
+            startActivity(newIntent);
         });
 
         resourceCursorAdapter = new ResourceCursorAdapter(this, R.layout.list_item, null, 0) {
@@ -290,7 +278,8 @@ public class TrackListActivity extends AbstractListActivity implements ConfirmDe
         ActivityUtils.configureListViewContextualMenu(listView, contextualActionModeCallback);
 
         LoaderManager.getInstance(this).initLoader(0, null, loaderCallbacks);
-        showStartupDialogs();
+
+        requestGPSPermissions();
     }
 
     @Override
@@ -434,19 +423,6 @@ public class TrackListActivity extends AbstractListActivity implements ConfirmDe
     @Override
     protected void onDeleted() {
         // Do nothing
-    }
-
-    /**
-     * Shows start up dialogs.
-     */
-    private void showStartupDialogs() {
-        // If stats_units_key is undefined, set it
-        if (PreferencesUtils.getString(this, R.string.stats_units_key, "").equals("")) {
-            String statsUnits = getString(Locale.US.equals(Locale.getDefault()) ? R.string.stats_units_imperial : R.string.stats_units_metric);
-            PreferencesUtils.setString(this, R.string.stats_units_key, statsUnits);
-        }
-
-        requestGPSPermissions();
     }
 
     private void requestGPSPermissions() {

@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import de.dennisguse.opentracks.BuildConfig;
@@ -46,8 +47,6 @@ public class FileUtils {
      * Used to transfer picture from the camera.
      */
     static final String FILEPROVIDER = BuildConfig.APPLICATION_ID + ".fileprovider";
-
-    public static final String EXPORT_DIR = "OpenTracks";
 
     private static final String JPEG_EXTENSION = "jpeg";
 
@@ -109,6 +108,10 @@ public class FileUtils {
             return null;
         }
         return fileName.substring(index + 1);
+    }
+
+    public static String getExtension(DocumentFile file) {
+        return getExtension(file.getName());
     }
 
     /**
@@ -229,13 +232,13 @@ public class FileUtils {
         return file.getAbsolutePath();
     }
 
-        /**
+    /**
      * Copy a File (src) to a File (dst).
      *
      * @param src source file.
      * @param dst destination file.
-         */
-        public static void copy(FileDescriptor src, File dst) {
+     */
+    public static void copy(FileDescriptor src, File dst) {
         try (FileChannel in = new FileInputStream(src).getChannel();
              FileChannel out = new FileOutputStream(dst).getChannel()) {
             in.transferTo(0, in.size(), out);
@@ -262,7 +265,7 @@ public class FileUtils {
      * @param context the Context.
      * @param trackId the id of the Track.
      * @param uri     the uri to check.
-     * @return        File object or null.
+     * @return File object or null.
      */
     public static File getPhotoFileIfExists(Context context, long trackId, Uri uri) {
         if (uri == null) {
@@ -299,5 +302,24 @@ public class FileUtils {
         } else if (file != null && file.isFile()) {
             file.delete();
         }
+    }
+
+    public static ArrayList<DocumentFile> getFiles(DocumentFile file) {
+        ArrayList<DocumentFile> files = new ArrayList<>();
+
+        if (!file.isDirectory()) {
+            files.add(file);
+            return files;
+        }
+
+        for (DocumentFile candidate : file.listFiles()) {
+            if (!candidate.isDirectory()) {
+                files.add(candidate);
+            } else {
+                files.addAll(getFiles(candidate));
+            }
+        }
+
+        return files;
     }
 }

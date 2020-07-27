@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -72,6 +73,7 @@ abstract class AbstractFileTrackImporter extends DefaultHandler implements Track
     // The current element content
     //TODO Should be made private and getter be used by child classes.
     protected String content;
+
     protected String icon;
     protected String name;
     protected String description;
@@ -81,8 +83,12 @@ abstract class AbstractFileTrackImporter extends DefaultHandler implements Track
     protected String altitude;
     protected String time;
     protected String speed;
+    protected String heartrate;
+    protected String cadence;
+    protected String power;
     protected String waypointType;
     protected String photoUrl;
+    protected String uuid;
 
     // The current track data
     private TrackData trackData;
@@ -91,11 +97,11 @@ abstract class AbstractFileTrackImporter extends DefaultHandler implements Track
     private Locator locator;
 
     /**
-     * Constructor.
-     *
      * @param context       the context
      * @param importTrackId the track id to import to. -1L to import to a new track.
      */
+    @Deprecated
+    // Remove importTrackId
     AbstractFileTrackImporter(Context context, long importTrackId, ContentProviderUtils contentProviderUtils) {
         this.context = context;
         this.importTrackId = importTrackId;
@@ -244,6 +250,14 @@ abstract class AbstractFileTrackImporter extends DefaultHandler implements Track
         if (name != null) {
             trackData.track.setName(name);
         }
+
+        try {
+            trackData.track.setUuid(UUID.fromString(uuid));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            Log.w(TAG, "could not parse Track UUID, generating a new one.");
+            trackData.track.setUuid(UUID.randomUUID());
+        }
+
         if (description != null) {
             trackData.track.setDescription(description);
         }
@@ -403,43 +417,54 @@ abstract class AbstractFileTrackImporter extends DefaultHandler implements Track
         if (latitude == null || longitude == null) {
             return null;
         }
-        double latitudeValue;
-        double longitudeValue;
+
+        TrackPoint trackPoint = new TrackPoint();
+
         try {
-            latitudeValue = Double.parseDouble(latitude);
-            longitudeValue = Double.parseDouble(longitude);
+            trackPoint.setLatitude(Double.parseDouble(latitude));
+            trackPoint.setLongitude(Double.parseDouble(longitude));
         } catch (NumberFormatException e) {
             throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse latitude longitude: %s %s", latitude, longitude)), e);
         }
-        Double altitudeValue = null;
-        if (altitude != null) {
-            try {
-                altitudeValue = Double.parseDouble(altitude);
-            } catch (NumberFormatException e) {
-                throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse altitude: %s", altitude)), e);
-            }
-        }
 
-        long timeValue;
         if (time == null) {
-            timeValue = trackData.importTime;
+            trackPoint.setTime(trackData.importTime);
         } else {
             try {
-                timeValue = StringUtils.parseTime(time);
+                trackPoint.setTime(StringUtils.parseTime(time));
             } catch (Exception e) {
                 throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse time: %s", time)), e);
             }
         }
 
-        TrackPoint trackPoint = new TrackPoint(latitudeValue, longitudeValue, altitudeValue, timeValue);
+        if (altitude != null) {
+            try {
+                trackPoint.setAltitude(Double.parseDouble(altitude));
+            } catch (NumberFormatException e) {
+                throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse altitude: %s", altitude)), e);
+            }
+        }
 
-        float speedValue;
         if (speed != null) {
             try {
-                speedValue = Float.valueOf(speed);
-                trackPoint.setSpeed(speedValue);
+                trackPoint.setSpeed(Float.parseFloat(speed));
             } catch (Exception e) {
                 throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse speed: %s", speed)), e);
+            }
+        }
+        if (heartrate != null) {
+            try {
+                trackPoint.setHeartRate_bpm(Float.parseFloat(heartrate));
+            } catch (Exception e) {
+                throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse heart rate: %s", heartrate)), e);
+            }
+        }
+
+        if (cadence != null) {
+            try {
+                trackPoint.setCyclingCadence_rpm(Float.parseFloat(cadence));
+            } catch (Exception e) {
+                throw new SAXException(createErrorMessage(String.format(Locale.US, "Unable to parse cadence: %s", cadence)), e);
             }
         }
 

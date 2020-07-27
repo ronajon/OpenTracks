@@ -22,7 +22,7 @@ import java.io.InputStream;
  *
  * @author Jimmy Shih
  */
-interface TrackImporter {
+public interface TrackImporter {
 
     /**
      * Import a file.
@@ -30,5 +30,6 @@ interface TrackImporter {
      * @param inputStream the file's input stream
      * @return the imported track id or RECORDING_TRACK_ID_DEFAULT.
      */
+    //TODO Figure out how can make the import an atomic operation (incl. database transaction rollback).
     long importFile(InputStream inputStream);
 }
