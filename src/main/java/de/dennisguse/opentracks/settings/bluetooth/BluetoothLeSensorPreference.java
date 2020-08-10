@@ -136,7 +136,7 @@ public abstract class BluetoothLeSensorPreference extends DialogPreference {
             UUID sensorUUID = (UUID) getArguments().getSerializable(ARG_BLUETOOTH_UUID);
             Log.i(TAG, "UUID: " + sensorUUID);
 
-            BluetoothAdapter bluetoothAdapter = BluetoothUtils.getDefaultBluetoothAdapter(TAG);
+            BluetoothAdapter bluetoothAdapter = BluetoothUtils.getAdapter(getContext());
             if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
                 Log.w(TAG, "Bluetooth adapter is present or not enabled.");
                 Toast.makeText(getContext(), R.string.bluetooth_disabled, Toast.LENGTH_SHORT).show();
@@ -189,7 +189,7 @@ public abstract class BluetoothLeSensorPreference extends DialogPreference {
                         BluetoothLeSensorPreferenceDialog.this.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
                         dialog.dismiss();
                     });
-            builder.setIcon(android.R.drawable.stat_sys_data_bluetooth);
+            builder.setIcon(R.drawable.ic_bluetooth_searching_24dp);
             builder.setPositiveButton(null, null);
         }
 

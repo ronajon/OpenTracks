@@ -50,8 +50,8 @@ android {
                 applicationName: "@string/app_name"
         ]
 
-        versionCode 3466
-        versionName "v3.8.0"
+        versionCode 3474
+        versionName "v3.8.1"
 
         buildConfigField "String", "VERSION_NAME_FULL", "\"${getVersionName()}\""
 
@@ -99,5 +99,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.2.0'
     androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'org.mockito:mockito-android:3.4.4'
+    androidTestImplementation 'org.mockito:mockito-android:3.4.6'
 }
